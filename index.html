@@ -1,42 +1,56 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mưa Tình Yêu</title>
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  height: 100%;
-  background-color: black;
-  font-family: 'Great Vibes', cursive;
-}
-#loveRain, #cakeCanvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-.text {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  color: #ffffff;
-  font-size: 8vw;
-  text-align: center;
-  opacity: 0;
-  z-index: 2;
-  transition: transform 1s ease, opacity 1s ease;
-  text-shadow: 0 0 20px rgba(255, 182, 193, 0.6);
-}
-.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-.hide { opacity: 0; transform: translate(-50%, -50%) scale(0); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mưa Tình Yêu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background-color: black;
+      font-family: 'Great Vibes', cursive;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: black;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      color: #ffffff;
+      font-size: 8vw;
+      text-align: center;
+      opacity: 0;
+      z-index: 2;
+      transition: transform 1s ease, opacity 1s ease;
+      text-shadow: 0 0 20px rgba(255, 182, 193, 0.6);
+    }
+
+    .show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .hide { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  </style>
 </head>
 <body>
 
@@ -52,12 +66,23 @@ html, body {
 // ----------- Hiệu ứng mưa LOVE -----------
 const rainCanvas = document.getElementById('loveRain');
 const rctx = rainCanvas.getContext('2d');
-rainCanvas.width = innerWidth;
-rainCanvas.height = innerHeight;
+
+function resizeRain() {
+  rainCanvas.width = window.innerWidth;
+  rainCanvas.height = window.innerHeight;
+}
+resizeRain();
+window.addEventListener('resize', resizeRain);
+
 const letters = "LOVE".split("");
 const fontSize = 20;
-const columns = Math.floor(rainCanvas.width / fontSize);
-const drops = Array(columns).fill(1);
+let drops = [];
+
+function setupRain() {
+  const columns = Math.floor(rainCanvas.width / fontSize);
+  drops = Array(columns).fill(1);
+}
+setupRain();
 
 function drawRain() {
   rctx.fillStyle = "rgba(0,0,0,0.1)";
@@ -97,11 +122,17 @@ function showNextLine() {
   }
 }
 
-// ----------- Bánh sinh nhật (viền trắng, cong hồng, nến đỏ, lửa vàng) -----------
+// ----------- Bánh sinh nhật (viền trắng, cong hồng, nến đỏ, lửa vàng nhọn) -----------
 const cakeCanvas = document.getElementById('cakeCanvas');
 const ctx = cakeCanvas.getContext('2d');
-cakeCanvas.width = innerWidth;
-cakeCanvas.height = innerHeight;
+
+function resizeCake() {
+  cakeCanvas.width = window.innerWidth;
+  cakeCanvas.height = window.innerHeight;
+}
+resizeCake();
+window.addEventListener('resize', resizeCake);
+
 let particles = [];
 
 function random(min, max) { return Math.random() * (max - min) + min; }
@@ -139,18 +170,17 @@ function createCakeOutline() {
   addRect(pts, -80, -10, 80, 30, "#ffffff");
   addCurve(pts, -80, 80, 10, 8, 15, "#ff8ed6");
 
-  // --- Nến (ngắn 1/2) ---
+  // --- Nến ---
   for (let y = -60; y <= -10; y += 2)
     pts.push({x: 0, y, color: "#ff4d4d"});
 
-// --- Ngọn lửa (vàng, hình thoi nhọn) ---
-for (let y = -70; y > -110; y -= 1) {
-  // công thức hình thoi: chiều ngang nhỏ dần khi lên cao và xuống thấp
-  const halfWidth = Math.max(0, 8 - Math.abs(y + 90) / 2);
-  for (let x = -halfWidth; x <= halfWidth; x += 1) {
-    pts.push({x, y, color: "#ffd966"}); // vàng sáng
+  // --- Ngọn lửa nhọn (hình thoi) ---
+  for (let y = -70; y > -110; y -= 1) {
+    const halfWidth = Math.max(0, 8 - Math.abs(y + 90) / 2);
+    for (let x = -halfWidth; x <= halfWidth; x += 1) {
+      pts.push({x, y, color: "#ffd966"});
+    }
   }
-}
   return pts;
 }
 
@@ -159,8 +189,8 @@ const cakeOutline = createCakeOutline();
 function drawCake() {
   const cx = cakeCanvas.width / 2;
   const cy = cakeCanvas.height / 2 + 10;
-  let scale = 0.1;
-  const targetScale = 2.5;
+  let scale = Math.min(cakeCanvas.width, cakeCanvas.height) / 600; // 🔥 tự co giãn theo màn hình
+  const targetScale = scale * 2.5;
 
   function animate() {
     ctx.fillStyle = "rgba(0,0,0,0.15)";
