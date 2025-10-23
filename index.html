@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Happy Birthday to Trâm Anh</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bánh sinh nhật 3D chấm sáng bay ra & xoay</title>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
   <style>
     html, body {
@@ -14,9 +14,7 @@
       background-color: black;
       font-family: 'Great Vibes', cursive;
     }
-
     body {
-      margin: 0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -24,7 +22,6 @@
       background: black;
       overflow: hidden;
     }
-
     canvas {
       position: absolute;
       top: 0;
@@ -33,21 +30,24 @@
       height: 100vh;
       display: block;
     }
-
+    #threeCanvas {
+      z-index: 5;
+      pointer-events: none;
+      display: none;
+    }
     .text {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0);
-      color: #ffffff;
+      color: #fff;
       font-size: 8vw;
       text-align: center;
       opacity: 0;
-      z-index: 2;
+      z-index: 3;
       transition: transform 1s ease, opacity 1s ease;
       text-shadow: 0 0 20px rgba(255, 182, 193, 0.6);
     }
-
     .show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     .hide { opacity: 0; transform: translate(-50%, -50%) scale(0); }
   </style>
@@ -55,7 +55,7 @@
 <body>
 
 <canvas id="loveRain"></canvas>
-<canvas id="cakeCanvas"></canvas>
+<canvas id="threeCanvas"></canvas>
 
 <div class="text" id="line1">Birthday 25+</div>
 <div class="text" id="line2">13/11/2000</div>
@@ -63,13 +63,12 @@
 <div class="text" id="line4">Wish all the best things come to<br>Trâm Anh &lt;3</div>
 
 <script>
-// ----------- Hiệu ứng mưa LOVE -----------
+// ========== Hiệu ứng mưa LOVE ==========
 const rainCanvas = document.getElementById('loveRain');
 const rctx = rainCanvas.getContext('2d');
-
 function resizeRain() {
-  rainCanvas.width = window.innerWidth;
-  rainCanvas.height = window.innerHeight;
+  rainCanvas.width = innerWidth;
+  rainCanvas.height = innerHeight;
 }
 resizeRain();
 window.addEventListener('resize', resizeRain);
@@ -77,13 +76,11 @@ window.addEventListener('resize', resizeRain);
 const letters = "LOVE".split("");
 const fontSize = 20;
 let drops = [];
-
 function setupRain() {
   const columns = Math.floor(rainCanvas.width / fontSize);
   drops = Array(columns).fill(1);
 }
 setupRain();
-
 function drawRain() {
   rctx.fillStyle = "rgba(0,0,0,0.1)";
   rctx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
@@ -98,7 +95,7 @@ function drawRain() {
 }
 setInterval(drawRain, 33);
 
-// ----------- Hiển thị dòng chữ -----------
+// ========== Dòng chữ ==========
 const lines = [
   document.getElementById("line1"),
   document.getElementById("line2"),
@@ -115,120 +112,135 @@ function showNextLine() {
     setTimeout(() => {
       lines[current].classList.add("show");
       current++;
-      setTimeout(showNextLine, 6000);
+      setTimeout(showNextLine, 4000);
     }, 1000);
   } else {
-    setTimeout(drawCake, 3000);
+    setTimeout(drawCake3D, 1500);
   }
 }
+showNextLine();
 
-// ----------- Bánh sinh nhật (viền trắng, cong hồng, nến đỏ, lửa vàng nhọn) -----------
-const cakeCanvas = document.getElementById('cakeCanvas');
-const ctx = cakeCanvas.getContext('2d');
+// ========== Bánh sinh nhật 3D chấm sáng ==========
+function drawCake3D() {
+  const canvas = document.getElementById('threeCanvas');
+  canvas.style.display = "block";
+  const ctx = canvas.getContext("2d");
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 
-function resizeCake() {
-  cakeCanvas.width = window.innerWidth;
-  cakeCanvas.height = window.innerHeight;
-}
-resizeCake();
-window.addEventListener('resize', resizeCake);
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2 + 80;
+  const scale = Math.min(innerWidth, innerHeight) / 600;
+  const angleX = -0.8;
 
-let particles = [];
+  const layers = [
+    { r: 180, h: 40, y: 0 },
+    { r: 130, h: 35, y: 50 },
+    { r: 85,  h: 30, y: 90 }
+  ];
 
-function random(min, max) { return Math.random() * (max - min) + min; }
+  const dots = [];
+  layers.forEach(l => {
+    const topColor = "#ff9bd6";
+    const sideColor = "#ffffff";
+    const edgeColor = "#ffd966";
 
-function addRect(points, x1, y1, x2, y3, color) {
-  for (let x = x1; x <= x2; x += 3) {
-    points.push({x, y: y1, color});
-    points.push({x, y: y3, color});
-  }
-  for (let y = y1; y <= y3; y += 3) {
-    points.push({x: x1, y, color});
-    points.push({x: x2, y, color});
-  }
-}
+    // mặt trên
+    for (let ang = 0; ang < Math.PI * 2; ang += Math.PI / 48) {
+      for (let r = 0; r <= l.r; r += 8) {
+        dots.push({x: Math.cos(ang)*r, y: l.y + l.h/2, z: Math.sin(ang)*r, color: topColor});
+      }
+    }
+    // thân
+    for (let ang = 0; ang < Math.PI * 2; ang += Math.PI / 36) {
+      for (let j = -l.h/2; j <= l.h/2; j += 4) {
+        dots.push({x: Math.cos(ang)*l.r, y: l.y + j, z: Math.sin(ang)*l.r, color: sideColor});
+      }
+    }
+    // viền
+    for (let ang = 0; ang < Math.PI * 2; ang += Math.PI / 32) {
+      dots.push({x: Math.cos(ang)*(l.r+3), y: l.y + l.h/2 + 2, z: Math.sin(ang)*(l.r+3), color: edgeColor});
+    }
+  });
 
-function addCurve(points, x1, x2, y, amp, freq, color) {
-  for (let x = x1; x <= x2; x += 3) {
-    const wave = amp * Math.sin((x - x1) / freq);
-    points.push({x, y: y + wave, color});
-  }
-}
-
-function createCakeOutline() {
-  const pts = [];
-
-  // --- Tầng 1 ---
-  addRect(pts, -180, 100, 180, 150, "#ffffff");
-  addCurve(pts, -180, 180, 125, 12, 20, "#ff8ed6");
-
-  // --- Tầng 2 ---
-  addRect(pts, -130, 40, 130, 90, "#ffffff");
-  addCurve(pts, -130, 130, 65, 10, 18, "#ff8ed6");
-
-  // --- Tầng 3 ---
-  addRect(pts, -80, -10, 80, 30, "#ffffff");
-  addCurve(pts, -80, 80, 10, 8, 15, "#ff8ed6");
-
-  // --- Nến ---
-  for (let y = -60; y <= -10; y += 2)
-    pts.push({x: 0, y, color: "#ff4d4d"});
-
-  // --- Ngọn lửa nhọn (hình thoi) ---
-  for (let y = -70; y > -110; y -= 1) {
-    const halfWidth = Math.max(0, 8 - Math.abs(y + 90) / 2);
-    for (let x = -halfWidth; x <= halfWidth; x += 1) {
-      pts.push({x, y, color: "#ffd966"});
+  // nến và lửa
+  const top = layers[2];
+  const candleCount = 12;
+  for (let i = 0; i < candleCount; i++) {
+    const ang = (i / candleCount) * Math.PI * 2;
+    const x = Math.cos(ang) * (top.r - 10);
+    const z = Math.sin(ang) * (top.r - 10);
+    for (let j = 0; j < 15; j++) {
+      dots.push({x, y: top.y + top.h/2 + j*2, z, color: "#ff4d4d"});
+    }
+    for (let k = 0; k < 6; k++) {
+      dots.push({x: x+(Math.random()-0.5)*2, y: top.y+top.h/2+35+k, z: z+(Math.random()-0.5)*2, color:"#ffd966", flicker:true});
     }
   }
-  return pts;
-}
 
-const cakeOutline = createCakeOutline();
+  // tạo vị trí bắt đầu (ở giữa)
+  dots.forEach(p => {
+    p.sx = 0;
+    p.sy = 0;
+    p.sz = 0;
+    p.tx = p.x;
+    p.ty = p.y;
+    p.tz = p.z;
+  });
 
-function drawCake() {
-  const cx = cakeCanvas.width / 2;
-  const cy = cakeCanvas.height / 2 + 10;
-  let scale = Math.min(cakeCanvas.width, cakeCanvas.height) / 600; // 🔥 tự co giãn theo màn hình
-  const targetScale = scale * 2.5;
+  const flyDuration = 2000; // 2 giây bay ra
+  const startTime = performance.now();
+  let angleY = 0;
+  let flyDone = false;
 
-  function animate() {
-    ctx.fillStyle = "rgba(0,0,0,0.15)";
-    ctx.fillRect(0, 0, cakeCanvas.width, cakeCanvas.height);
+  function render(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / flyDuration, 1);
 
-    if (scale < targetScale) scale += 0.02;
+    if (progress >= 1) flyDone = true;
+    if (flyDone) angleY += 0.0025;
 
-    for (let i = 0; i < 15; i++) {
-      const p = cakeOutline[Math.floor(Math.random() * cakeOutline.length)];
-      particles.push({
-        x: cx + p.x * scale + random(-1, 1),
-        y: cy + p.y * scale + random(-1, 1),
-        size: random(2, 4),
-        alpha: random(0.6, 1),
-        flicker: random(0.8, 1.2),
-        color: p.color
-      });
-    }
+    const sinY = Math.sin(angleY), cosY = Math.cos(angleY);
+    const sinX = Math.sin(angleX), cosX = Math.cos(angleX);
+    const t = Date.now() * 0.005;
 
-    for (let p of particles) {
-      const flickerAlpha = p.alpha * (0.7 + 0.3 * Math.sin(Date.now() * 0.005 * p.flicker));
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    dots.forEach(p => {
+      // vị trí bay ra
+      const xNow = p.sx + (p.tx - p.sx) * progress;
+      const yNow = p.sy + (p.ty - p.sy) * progress;
+      const zNow = p.sz + (p.tz - p.sz) * progress;
+
+      // xoay nếu đã hoàn tất bay ra
+      const xz = xNow * cosY - zNow * sinY;
+      const zz = xNow * sinY + zNow * cosY;
+      const yz = yNow * cosX - zz * sinX;
+      const zz2 = yNow * sinX + zz * cosX;
+
+      const perspective = 400 / (400 + zz2);
+      const x2d = cx + xz * scale * perspective * 1.5;
+      const y2d = cy - yz * scale * perspective;
+      const size = 2.2 * perspective + 0.5;
+
+      if (p.flicker) {
+        const f = 0.8 + 0.2 * Math.sin(t + xz * 0.1);
+        ctx.globalAlpha = f;
+      } else {
+        ctx.globalAlpha = Math.min(1, Math.max(0.4, perspective));
+      }
+
       ctx.beginPath();
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = flickerAlpha;
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.arc(x2d, y2d, size, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
-      p.alpha -= 0.006;
-    }
-
-    particles = particles.filter(p => p.alpha > 0);
-    requestAnimationFrame(animate);
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(render);
   }
-  animate();
+  requestAnimationFrame(render);
 }
-
-showNextLine();
 </script>
 </body>
 </html>
-
